@@ -3,7 +3,14 @@ name = "systemone-facet"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-rust-version.workspace = true
-description = "Typed systemone choice/score criteria via facet reflection (stub, not yet implemented)"
+# facet requires a newer toolchain than the workspace default (matched to maki's MSRV);
+# override rather than raise the workspace floor for one exploratory crate.
+rust-version = "1.90"
+description = "Typed systemone choice/score criteria via facet reflection"
 
 [dependencies]
+systemone = { workspace = true }
+facet = "0.46"
+
+[dev-dependencies]
+serde = { workspace = true }

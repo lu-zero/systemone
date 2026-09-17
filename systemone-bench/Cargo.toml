@@ -1,0 +1,21 @@
+[package]
+name = "systemone-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+# Pulled up by systemone-facet's facet dependency; not meant for publishing anyway.
+rust-version = "1.90"
+publish = false
+
+[dependencies]
+systemone = { workspace = true }
+systemone-macro = { workspace = true }
+systemone-facet = { workspace = true }
+facet = "0.46"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "choice_criteria"
+harness = false
