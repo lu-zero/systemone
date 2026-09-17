@@ -1,0 +1,9 @@
+[package]
+name = "systemone-facet"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Typed systemone choice/score criteria via facet reflection (stub, not yet implemented)"
+
+[dependencies]

@@ -1,0 +1,15 @@
+[package]
+name = "systemone-macro"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Derive macro for typed systemone choice/score criteria (stub, not yet implemented)"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
