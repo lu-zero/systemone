@@ -1,6 +1,7 @@
 # systemone
 
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/systemone.svg)](https://crates.io/crates/systemone)
 [![Build Status](https://github.com/lu-zero/systemone/workflows/CI/badge.svg)](https://github.com/lu-zero/systemone/actions?query=workflow:CI)
 [![dependency status](https://deps.rs/repo/github/lu-zero/systemone/status.svg)](https://deps.rs/repo/github/lu-zero/systemone)
 

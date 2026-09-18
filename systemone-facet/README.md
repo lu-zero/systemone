@@ -1,6 +1,8 @@
 # systemone-facet
 
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/systemone-facet.svg)](https://crates.io/crates/systemone-facet)
+[![Docs.rs](https://docs.rs/systemone-facet/badge.svg)](https://docs.rs/systemone-facet)
 
 Typed `choice` criteria for [`systemone`](../systemone) via
 [`facet`](https://github.com/facet-rs/facet) reflection, as an alternative to

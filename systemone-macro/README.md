@@ -1,6 +1,8 @@
 # systemone-macro
 
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/systemone-macro.svg)](https://crates.io/crates/systemone-macro)
+[![Docs.rs](https://docs.rs/systemone-macro/badge.svg)](https://docs.rs/systemone-macro)
 
 `#[derive(ChoiceCriteria)]` for [`systemone`](../systemone): builds a `choice` question's
 outbound labels and descriptions from an enum's unit variants and doc comments, at compile

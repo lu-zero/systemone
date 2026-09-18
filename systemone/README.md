@@ -1,6 +1,8 @@
 # systemone
 
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/systemone.svg)](https://crates.io/crates/systemone)
+[![Docs.rs](https://docs.rs/systemone/badge.svg)](https://docs.rs/systemone)
 
 Rust client for the [TypeSafe AI](https://typesafe.ai) `systemone` API: send text or
 structured state plus named questions, get back typed, probabilistic answers.
