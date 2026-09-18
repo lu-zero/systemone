@@ -54,35 +54,66 @@ asked.
 
 ## Unslop rules
 
-This codebase is written and maintained with heavy AI assistance — treat these as
-enforced, not stylistic preference:
+Enforced, not a stylistic preference. This codebase is written and maintained with heavy
+AI assistance, and every rule below is something a real pass got wrong and had to clean
+up later (see the retry-loop/error-enum simplification in git history for what "before"
+looked like).
 
+**Comments**
 - Default to no comment. Add one only when the *why* is non-obvious: a hidden
-  constraint, a workaround, an invariant a future reader would otherwise violate.
-- Terse: one sentence beats a paragraph. No comment block over ~3 lines; if it needs
-  more, the code needs simplifying instead, or the explanation belongs in the commit
-  message.
-- Never restate what the code already says through its own names.
+  constraint, a workaround for a specific bug, an invariant a future reader would
+  violate without warning.
+- Hard limits: no comment line over 150 characters, no comment block over 3 lines.
+  Hitting either means cut, don't wrap — needing more room is a sign the explanation (or
+  the code it's attached to) needs to be smaller, not that it needs more space.
+- Never restate what the code already says through its own names — the reader can read
+  Rust.
 - Never reference the current task, a commit, a PR/issue number, or a session ("fixed
-  for the X flow", "added per review") — that belongs in the commit message, not code
-  that outlives it.
-- No commented-out code, no `// removed: ...` markers — `git log`/`git blame` is the
-  actual history.
+  for the X flow", "added per review", "per Luca's request"). That context belongs in
+  the commit message; a comment that cites it rots the moment the file moves.
+- No commented-out code and no `// removed: ...` markers for deleted code — `git
+  log`/`git blame` is the actual history.
 
-## Dead weight
-
+**Dead weight**
 - No speculative abstraction for a single call site: no config knob, trait
   generalization, or feature flag without a second concrete caller that needs it today.
-- No error handling or validation for a scenario the caller's own guarantees already
-  rule out.
+- No error handling, fallback, or validation for a scenario the caller's own guarantees
+  already rule out.
 - `#[allow(dead_code)]` is not a way to keep something "just in case" — delete it; it's
   in git history if it turns out to be needed.
 
+**Tests**
+- A test must exercise a real branch or decision point in *this* code, not the standard
+  library or a dependency it thinly wraps. `assert!(Client::builder().build().is_err())`
+  with no API key tests our validation; asserting `2 + 2 == 4` in the middle of it would
+  not.
+- No test added purely to make "touched a function → added a test" true.
+
+Before adding either a comment or an abstraction, ask: would a maintainer who knows this
+codebase well have bothered to write this, or does it exist because generating
+*something* felt safer than generating nothing?
+
 ## Commits
 
-Reasonably close to [Conventional Commits](https://www.conventionalcommits.org/)
-(`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `ci:`, `chore:`) for the subject line;
-not strictly enforced for a project this size, but prefer it.
+[Conventional Commits](https://www.conventionalcommits.org/), enforced:
+
+```
+<type>: <description>
+```
+
+- `feat:` — new functionality
+- `fix:` — bug fix
+- `refactor:` — code restructuring without behavior change
+- `docs:` — documentation only (README, AGENTS.md, doc comments)
+- `test:` — adding or updating tests
+- `ci:` — CI/CD changes
+- `chore:` — maintenance (dependencies, tooling, release housekeeping)
+
+Subject line imperative mood ("add", not "added"/"adds"), no period, ideally under 72
+characters. A scope (`fix(retry): ...`) is fine but optional. A body, if there is one,
+follows the same hard limits as comments above: no line over 150 characters, no
+paragraph over 5 lines (3 is better) — state what changed and why it matters to a future
+reader, not a narrated investigation.
 
 ## MSRV
 
