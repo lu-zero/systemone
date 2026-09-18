@@ -34,8 +34,8 @@ For the same result via runtime reflection instead of a proc-macro, see
 [`systemone-facet`](../systemone-facet) — both are supported long-term; pick whichever
 fits (self-contained macro vs. reusing an existing `facet` dependency).
 
-See [`examples/typed.rs`](examples/typed.rs) for a full round trip against the live API
-(`TYPESAFE_API_KEY=... cargo run --example typed -p systemone-macro`).
+See [`examples/typed_macro.rs`](examples/typed_macro.rs) for a full round trip against
+the live API (`TYPESAFE_API_KEY=... cargo run --example typed_macro -p systemone-macro`).
 
 ## License
 

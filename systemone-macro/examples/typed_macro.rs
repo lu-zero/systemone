@@ -1,4 +1,4 @@
-//! Run with `TYPESAFE_API_KEY=... cargo run --example typed -p systemone-macro`.
+//! Run with `TYPESAFE_API_KEY=... cargo run --example typed_macro -p systemone-macro`.
 
 use std::collections::BTreeMap;
 

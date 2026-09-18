@@ -1,6 +1,7 @@
-//! Run with `TYPESAFE_API_KEY=... cargo run --example typed -p systemone-facet`.
+//! Run with `TYPESAFE_API_KEY=... cargo run --example typed_facet -p systemone-facet`.
 //!
-//! Same scenario as systemone-macro's `typed` example, via reflection instead of a derive.
+//! Same scenario as systemone-macro's `typed_macro` example, via reflection instead of a
+//! derive.
 
 use std::collections::BTreeMap;
 

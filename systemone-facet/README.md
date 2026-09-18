@@ -33,8 +33,8 @@ globally after first use, since reaching `'static` requires leaking it once.
 
 Requires Rust 1.90+ (`facet`'s MSRV), above the rest of the workspace's 1.88 floor.
 
-See [`examples/typed.rs`](examples/typed.rs) for a full round trip against the live API
-(`TYPESAFE_API_KEY=... cargo run --example typed -p systemone-facet`).
+See [`examples/typed_facet.rs`](examples/typed_facet.rs) for a full round trip against
+the live API (`TYPESAFE_API_KEY=... cargo run --example typed_facet -p systemone-facet`).
 
 ## License
 
