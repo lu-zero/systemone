@@ -51,15 +51,11 @@ pub struct NoulResponse {
     pub noul: f64,
 }
 
-/// A selected label and its probabilities.
-///
-/// `T` defaults to `String`; deserialize into your own `#[derive(Deserialize)]` enum for a
-/// typed choice instead.
+/// A selected label and its probabilities. `T` defaults to `String`; deserialize into your
+/// own `#[derive(Deserialize)]` enum for a typed choice instead.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ChoiceResponse<T = String> {
-    /// The selected label.
     pub choice: T,
-    /// Reported confidence in the selected label.
     pub confidence: f64,
     /// Probabilities keyed by label.
     pub probabilities: BTreeMap<String, f64>,
@@ -70,7 +66,6 @@ pub struct ChoiceResponse<T = String> {
 pub struct ScoreResponse {
     /// Expected score, which may fall between integer rubric levels.
     pub score: f64,
-    /// Reported confidence in the score.
     pub confidence: f64,
     /// Rubric descriptions keyed by stringified score index.
     pub legend: BTreeMap<String, EntryType>,
@@ -78,10 +73,8 @@ pub struct ScoreResponse {
     pub probabilities: BTreeMap<String, f64>,
 }
 
-/// An answer whose question type wasn't known at compile time.
-///
-/// Returned by [`Client::system_one_raw`](crate::Client::system_one_raw). Deserialize into
-/// your own type via [`Client::system_one`](crate::Client::system_one) for typed answers.
+/// An answer whose question type wasn't known at compile time, as returned by
+/// [`Client::system_one_raw`](crate::Client::system_one_raw).
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Answer {
@@ -93,20 +86,16 @@ pub enum Answer {
 /// Token usage for a request.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Usage {
-    /// Number of input tokens used.
     pub input_tokens: u64,
-    /// Number of output tokens used.
     pub output_tokens: u64,
 }
 
 /// Answers keyed by question name, with model and usage metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SystemOneResult<A> {
-    /// The model used to answer the request.
     pub model: String,
     /// Answers; a `BTreeMap<String, Answer>` unless deserialized into your own type.
     pub answers: A,
-    /// Token usage for the request.
     pub usage: Usage,
 }
 

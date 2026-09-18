@@ -1,8 +1,10 @@
 //! Typed `choice` criteria via [`facet`] reflection, as an alternative to
 //! `systemone-macro`'s derive-macro approach.
 //!
-//! Derive `facet::Facet` (not this crate's own macro — there isn't one) on a unit-variant
-//! enum, then wire it to `systemone::ChoiceCriteria` with [`impl_choice_criteria!`]:
+//! Derive `facet::Facet` on a unit-variant enum, then wire it to
+//! `systemone::ChoiceCriteria` with [`impl_choice_criteria!`]. The macro exists because a
+//! blanket `impl<'a, T: Facet<'a>> ChoiceCriteria for T` is barred by the orphan rule:
+//! both the trait and `T` are foreign to this crate.
 //!
 //! ```
 //! use facet::Facet;
@@ -17,11 +19,8 @@
 //! systemone_facet::impl_choice_criteria!(Category);
 //! ```
 //!
-//! Labels use `#[facet(rename = "...")]` / `#[facet(rename_all = "...")]` when present,
-//! else the variant name lowercased, matching `systemone-macro`'s default so the two are
-//! directly comparable for a plain enum. Descriptions come from each variant's doc comment.
-//! Unlike the macro, which bakes labels in at compile time, a lowercased fallback here is
-//! computed (and cached) the first time each variant name is seen.
+//! Labels come from `#[facet(rename)]` / `#[facet(rename_all)]`, else the variant name
+//! lowercased, matching `systemone-macro`'s default. Descriptions come from doc comments.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -57,8 +56,8 @@ pub fn choice_criteria<'a, T: Facet<'a>>() -> Vec<(&'static str, Option<EntryTyp
         .collect()
 }
 
-/// Lowercase `name`, caching the leaked `'static` result so repeated calls for the same
-/// variant name don't each leak a new allocation.
+/// Lowercase `name`. The result is leaked to reach `'static`, so it is cached to keep
+/// repeated calls for one variant name from leaking a fresh allocation each time.
 fn lowercased(name: &'static str) -> &'static str {
     static CACHE: OnceLock<Mutex<HashMap<&'static str, &'static str>>> = OnceLock::new();
     let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));

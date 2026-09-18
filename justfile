@@ -11,10 +11,10 @@ test *ARGS:
     cargo test --workspace {{ARGS}}
 
 lint:
-    cargo clippy --all --tests -- -D warnings
+    cargo clippy --workspace --all-targets -- -D warnings
 
 lint-fix:
-    cargo clippy --all --tests --fix
+    cargo clippy --workspace --all-targets --fix
 
 fmt-check:
     cargo fmt --all -- --check
@@ -22,4 +22,7 @@ fmt-check:
 fmt:
     cargo fmt --all
 
-ci: fmt-check lint test
+doc *ARGS:
+    cargo doc --workspace --no-deps {{ARGS}}
+
+ci: fmt-check lint test doc

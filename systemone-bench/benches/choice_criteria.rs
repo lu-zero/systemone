@@ -1,10 +1,8 @@
 //! Compares `systemone-macro`'s compile-time codegen against `systemone-facet`'s runtime
-//! reflection for building the same `choice` criteria from an equivalent enum.
+//! reflection for building the same `choice` criteria.
 //!
-//! Both benches measure steady state: `systemone-facet`'s lowercase-label cache (see its
-//! `lowercased` function) is populated by the first call for a given variant name and
-//! reused after that, so a real cold-start cost (one hashmap insert + a leaked allocation
-//! per variant, once per process) isn't visible here.
+//! Both measure steady state only: `systemone-facet`'s lowercase-label cache is filled once
+//! per process, and that cost is not visible here.
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use systemone::ChoiceCriteria;

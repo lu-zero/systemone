@@ -49,29 +49,11 @@ pub enum Error {
 }
 
 impl Error {
-    pub(crate) fn api(status: u16, message: String, request_id: Option<String>) -> Self {
-        Self::Api {
-            status,
-            message,
-            request_id,
-        }
-    }
-
     /// HTTP status code, when this is an [`Error::Api`].
     pub fn status(&self) -> Option<u16> {
         match self {
             Self::Api { status, .. } => Some(*status),
             _ => None,
-        }
-    }
-
-    /// Whether this kind of failure is one the client already retries internally
-    /// (informational: by the time you observe an error, retries are exhausted).
-    pub fn is_retryable(&self) -> bool {
-        match self {
-            Self::Api { status, .. } => *status == 408 || *status == 429 || *status >= 500,
-            Self::Connection(_) => true,
-            _ => false,
         }
     }
 }

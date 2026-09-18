@@ -1,3 +1,4 @@
+use isahc::http::Method;
 use serde::Deserialize;
 
 use crate::client::Client;
@@ -31,7 +32,7 @@ impl<'a> Models<'a> {
     pub async fn list(&self) -> Result<Vec<ModelCard>, Error> {
         let wire: ModelsWire = self
             .client
-            .request::<(), ModelsWire>(isahc::http::Method::GET, "/v1/models", None)
+            .request(Method::GET, "/v1/models", None::<&()>)
             .await?;
         Ok(wire.models)
     }

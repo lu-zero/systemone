@@ -1,11 +1,7 @@
 use std::collections::BTreeSet;
 use std::time::Duration;
 
-/// Retry configuration.
-///
-/// Defaults: 2 retries, 500ms initial backoff doubling up to 5s with 25% jitter, retrying
-/// HTTP 408/429/5xx and connection errors, honoring a server's `Retry-After` (or the
-/// nonstandard `retry-after-ms`) header up to 60s.
+/// Retry configuration; see [`RetryPolicy::default`] for the defaults.
 #[derive(Debug, Clone)]
 pub struct RetryPolicy {
     /// Maximum retries after the initial attempt; `0` disables retries.
@@ -18,7 +14,7 @@ pub struct RetryPolicy {
     pub backoff_jitter: f64,
     /// HTTP status codes to retry.
     pub retryable_statuses: BTreeSet<u16>,
-    /// Honor `Retry-After` / `retry-after-ms` up to `max_retry_after`.
+    /// Honor `Retry-After` and the nonstandard `retry-after-ms`, up to `max_retry_after`.
     pub respect_retry_after: bool,
     /// Maximum server retry delay to honor; longer delays fall back to backoff.
     pub max_retry_after: Duration,
@@ -51,7 +47,7 @@ impl RetryPolicy {
         }
         let exponential = self
             .backoff_initial
-            .saturating_mul(1u32 << attempt.min(16))
+            .saturating_mul(1u32.checked_shl(attempt).unwrap_or(u32::MAX))
             .min(self.backoff_max);
         exponential.mul_f64(1.0 - fastrand::f64() * self.backoff_jitter)
     }

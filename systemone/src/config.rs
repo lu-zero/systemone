@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 use std::time::Duration;
 
+use isahc::HttpClient;
+
 use crate::client::Client;
 use crate::error::Error;
 use crate::retry::RetryPolicy;
@@ -21,7 +23,6 @@ pub(crate) const DEFAULT_BASE_URL: &str = "https://api.typesafe.ai";
 pub(crate) const DEFAULT_MODEL: &str = "jev-latest";
 pub(crate) const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// A trimmed, nonblank environment value, or `None` for missing or blank values.
 fn read_env(name: &str) -> Option<String> {
     std::env::var(name)
         .ok()
@@ -97,14 +98,15 @@ impl ClientBuilder {
             .or_else(|| read_env(Env::DEFAULT_MODEL))
             .unwrap_or_else(|| DEFAULT_MODEL.to_string());
 
-        Client::new(
+        Ok(Client {
             api_key,
             base_url,
             default_model,
-            self.timeout.unwrap_or(DEFAULT_TIMEOUT),
-            self.retry.unwrap_or_default(),
-            self.default_headers,
-        )
+            timeout: self.timeout.unwrap_or(DEFAULT_TIMEOUT),
+            retry: self.retry.unwrap_or_default(),
+            default_headers: self.default_headers,
+            http: HttpClient::new()?,
+        })
     }
 }
 
@@ -114,8 +116,7 @@ mod tests {
 
     #[test]
     fn missing_api_key_without_env_is_an_error() {
-        // SAFETY: tests run single-threaded within this process for this module only in
-        // practice; still, only touch a variable this test owns.
+        // SAFETY: no other test in this binary reads the environment.
         unsafe { std::env::remove_var(Env::API_KEY) };
         let err = ClientBuilder::default().build().unwrap_err();
         assert!(matches!(err, Error::MissingApiKey(Env::API_KEY)));

@@ -46,26 +46,6 @@ impl Client {
         ClientBuilder::default()
     }
 
-    pub(crate) fn new(
-        api_key: String,
-        base_url: String,
-        default_model: String,
-        timeout: Duration,
-        retry: RetryPolicy,
-        default_headers: BTreeMap<String, String>,
-    ) -> Result<Self, Error> {
-        let http = HttpClient::new()?;
-        Ok(Self {
-            api_key,
-            base_url,
-            default_model,
-            timeout,
-            retry,
-            default_headers,
-            http,
-        })
-    }
-
     /// Access to the models API resource.
     pub fn models(&self) -> Models<'_> {
         Models::new(self)
@@ -115,7 +95,7 @@ impl Client {
             let request = self.build_request(&method, &url, body_bytes.as_deref(), attempt)?;
             let started = Instant::now();
 
-            match self.http.send_async(request).await {
+            let (error, retry_after) = match self.http.send_async(request).await {
                 Ok(mut response) => {
                     let status = response.status();
                     info!(
@@ -131,37 +111,33 @@ impl Client {
                         return Ok(serde_json::from_str(&text)?);
                     }
 
-                    let text = response.text().await.unwrap_or_default();
+                    let retry_after = retry_after(response.headers());
                     let request_id = response
                         .headers()
                         .get(REQUEST_ID_HEADER)
                         .and_then(|v| v.to_str().ok())
                         .map(str::to_string);
+                    let error = Error::Api {
+                        status: status.as_u16(),
+                        message: response.text().await.unwrap_or_default(),
+                        request_id,
+                    };
 
-                    let retries_left = self.retry.max_retries.saturating_sub(attempt);
-                    let retryable = self.retry.retryable_statuses.contains(&status.as_u16());
-                    if !retryable || retries_left == 0 {
-                        return Err(Error::api(status.as_u16(), text, request_id));
+                    if !self.retry.retryable_statuses.contains(&status.as_u16()) {
+                        return Err(error);
                     }
+                    (error, retry_after)
+                }
+                Err(err) => (err.into(), None),
+            };
 
-                    let delay = self
-                        .retry
-                        .delay_for(attempt, retry_after(response.headers()));
-                    debug!(attempt, delay_ms = delay.as_millis() as u64, %status, "retrying");
-                    async_io::Timer::after(delay).await;
-                    attempt += 1;
-                }
-                Err(err) => {
-                    let retries_left = self.retry.max_retries.saturating_sub(attempt);
-                    if retries_left == 0 {
-                        return Err(err.into());
-                    }
-                    let delay = self.retry.delay_for(attempt, None);
-                    debug!(attempt, delay_ms = delay.as_millis() as u64, error = %err, "retrying");
-                    async_io::Timer::after(delay).await;
-                    attempt += 1;
-                }
+            if attempt >= self.retry.max_retries {
+                return Err(error);
             }
+            let delay = self.retry.delay_for(attempt, retry_after);
+            debug!(attempt, delay_ms = delay.as_millis() as u64, %error, "retrying");
+            async_io::Timer::after(delay).await;
+            attempt += 1;
         }
     }
 

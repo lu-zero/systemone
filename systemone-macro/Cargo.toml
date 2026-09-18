@@ -4,13 +4,15 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Derive macro for typed systemone choice/score criteria (stub, not yet implemented)"
+repository.workspace = true
+readme = "README.md"
+description = "Derive macro for typed systemone choice criteria"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = { version = "2", features = ["full"] }
+syn = "2"
 quote = "1"
 proc-macro2 = "1"
 

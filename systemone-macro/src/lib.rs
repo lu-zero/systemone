@@ -1,14 +1,9 @@
 //! `#[derive(ChoiceCriteria)]`: implements `systemone::ChoiceCriteria` for a unit-variant
-//! enum, generating the outbound `choice` labels/descriptions from the enum's variants and
-//! doc comments at compile time.
+//! enum from its variants and doc comments, at compile time.
 //!
-//! Labels follow `#[serde(rename = "...")]` / `#[serde(rename_all = "...")]` when present
-//! (a subset: lowercase, UPPERCASE, snake_case, SCREAMING_SNAKE_CASE, kebab-case,
-//! SCREAMING-KEBAB-CASE, camelCase, PascalCase), so the same enum can also derive
-//! `serde::Deserialize` for the response side without the two disagreeing. With no
-//! `rename_all`, labels default to the variant name lowercased.
-//!
-//! See `systemone-facet` for the same goal via runtime reflection instead.
+//! Labels follow a subset of `#[serde(rename)]` / `#[serde(rename_all)]` so the same enum
+//! can also derive `serde::Deserialize` for the response side without the two disagreeing.
+//! Unannotated, a label is the variant name lowercased.
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
@@ -31,7 +26,7 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         ));
     };
 
-    let rename_all = container_rename_all(&input.attrs)?;
+    let rename_all = serde_string(&input.attrs, "rename_all")?;
     let name = &input.ident;
 
     let mut entries = Vec::with_capacity(data.variants.len());
@@ -42,7 +37,7 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
                 "ChoiceCriteria only supports unit variants",
             ));
         }
-        let label = variant_rename(&variant.attrs)?
+        let label = serde_string(&variant.attrs, "rename")?
             .unwrap_or_else(|| apply_case(&variant.ident.to_string(), rename_all.as_deref()));
         let description = match variant_doc(&variant.attrs) {
             Some(text) => {
@@ -90,21 +85,13 @@ fn string_lit(expr: &syn::Expr) -> Option<String> {
     }
 }
 
-fn container_rename_all(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
+fn serde_string(attrs: &[syn::Attribute], key: &str) -> syn::Result<Option<String>> {
     Ok(serde_name_values(attrs)?
         .into_iter()
-        .find(|nv| nv.path.is_ident("rename_all"))
+        .find(|nv| nv.path.is_ident(key))
         .and_then(|nv| string_lit(&nv.value)))
 }
 
-fn variant_rename(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
-    Ok(serde_name_values(attrs)?
-        .into_iter()
-        .find(|nv| nv.path.is_ident("rename"))
-        .and_then(|nv| string_lit(&nv.value)))
-}
-
-/// Doc comment lines, trimmed and joined with a space; `None` if there are none.
 fn variant_doc(attrs: &[syn::Attribute]) -> Option<String> {
     let lines: Vec<String> = attrs
         .iter()
@@ -129,8 +116,7 @@ fn apply_case(name: &str, rename_all: Option<&str>) -> String {
         Some("SCREAMING_SNAKE_CASE") => to_snake_case(name).to_uppercase(),
         Some("kebab-case") => to_snake_case(name).replace('_', "-"),
         Some("SCREAMING-KEBAB-CASE") => to_snake_case(name).to_uppercase().replace('_', "-"),
-        // No rename_all: default to lowercase, matching systemone-facet's default so the
-        // two backends are directly comparable for a plain, unannotated enum.
+        // Matches systemone-facet's default, so both backends agree on an unannotated enum.
         _ => name.to_lowercase(),
     }
 }
