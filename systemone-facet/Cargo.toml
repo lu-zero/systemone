@@ -12,3 +12,7 @@ description = "Typed systemone choice criteria via facet reflection"
 [dependencies]
 systemone = { workspace = true }
 facet = "0.46"
+
+[dev-dependencies]
+serde = { workspace = true }
+futures-lite = { workspace = true }

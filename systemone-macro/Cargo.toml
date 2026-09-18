@@ -18,3 +18,5 @@ proc-macro2 = "1"
 
 [dev-dependencies]
 systemone = { workspace = true }
+serde = { workspace = true }
+futures-lite = { workspace = true }

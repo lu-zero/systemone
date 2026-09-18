@@ -19,4 +19,4 @@ fastrand = { workspace = true }
 
 [dev-dependencies]
 test-case = { workspace = true }
-futures-lite = "2"
+futures-lite = { workspace = true }
