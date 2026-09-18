@@ -12,7 +12,7 @@ description = "Derive macro for typed systemone choice criteria"
 proc-macro = true
 
 [dependencies]
-syn = "2"
+syn = "3"
 quote = "1"
 proc-macro2 = "1"
 
