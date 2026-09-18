@@ -64,11 +64,13 @@ just check   # cargo check --workspace --tests
 just test    # cargo test --workspace
 just lint    # cargo clippy --workspace --all-targets -- -D warnings
 just fmt     # cargo fmt --all
+just doc     # cargo doc --workspace --no-deps
 just ci      # everything CI runs
 ```
 
 `systemone-facet` and `systemone-bench` need Rust 1.90+ (the `facet` crate's MSRV);
 `systemone`/`systemone-macro` target 1.88, matching [maki](https://github.com/tontinton/maki)'s.
+See [AGENTS.md](AGENTS.md) for full project conventions.
 
 ## License
 
