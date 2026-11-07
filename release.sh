@@ -167,6 +167,22 @@ push_release() {
     "$GIT" push origin "$tag"
     printf 'Create the GitHub release at:\n  %s/releases/new?tag=%s\n' \
         "${remote%.git}" "$tag"
+    # Create the release directly when gh is authenticated; fall back to the URL.
+    if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+        local repo notes
+        repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null) \
+            || repo=""
+        if [ -n "$repo" ]; then
+            notes=$("$GIT" cat-file tag "$tag" | tail -n +6)
+            if gh release create "$tag" --repo "$repo" --title "$tag" --notes "$notes" 2>/dev/null; then
+                printf 'GitHub release created: %s/releases/tag/%s\n' "${remote%.git}" "$tag"
+            else
+                printf 'gh release create failed; create it manually at the URL above.\n'
+            fi
+        fi
+    else
+        printf '(gh not authenticated — create the release manually at the URL above)\n'
+    fi
 }
 
 main() {
