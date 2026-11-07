@@ -12,6 +12,7 @@ use serde::de::DeserializeOwned;
 use tracing::{debug, info};
 
 use crate::config::ClientBuilder;
+use crate::dialect::{self, Dialect};
 use crate::error::Error;
 use crate::resources::models::Models;
 use crate::retry::RetryPolicy;
@@ -36,6 +37,8 @@ pub struct Client {
     pub retry: RetryPolicy,
     /// Additional headers sent with each request.
     pub default_headers: BTreeMap<String, String>,
+    /// Decision API this client posts to.
+    pub dialect: Dialect,
     pub(crate) http: HttpClient,
 }
 
@@ -63,7 +66,8 @@ impl Client {
     ///
     /// Use `BTreeMap<String, Answer>` (see [`Self::system_one_raw`]) for an untyped answer
     /// map, or your own `#[derive(Deserialize)]` struct for typed answers whose field names
-    /// match the question names.
+    /// match the question names. [`Dialect::OpenAi`] translates the request and the response,
+    /// so `A` stays in the systemone shape either way.
     ///
     /// # Errors
     /// Returns [`Error::NoQuestions`] if `request.questions` is empty.
@@ -77,8 +81,16 @@ impl Client {
         request
             .model
             .get_or_insert_with(|| self.default_model.clone());
-        self.request(Method::POST, "/v1/systemone", Some(&request))
-            .await
+        let (path, body) = match self.dialect {
+            Dialect::SystemOne => ("/v1/systemone", serde_json::to_vec(&request)?),
+            Dialect::OpenAi => (dialect::DECISIONS_PATH, dialect::encode(&request)?),
+        };
+        let text = self.send(Method::POST, path, Some(&body)).await?;
+        let value = match self.dialect {
+            Dialect::SystemOne => serde_json::from_str(&text)?,
+            Dialect::OpenAi => dialect::decode(&text, &request.questions)?,
+        };
+        Ok(serde_json::from_value(value)?)
     }
 
     pub(crate) async fn request<B: Serialize, T: DeserializeOwned>(
@@ -87,12 +99,16 @@ impl Client {
         path: &str,
         body: Option<&B>,
     ) -> Result<T, Error> {
-        let url = format!("{}{path}", self.base_url);
-        let body_bytes = body.map(serde_json::to_vec).transpose()?;
+        let body = body.map(serde_json::to_vec).transpose()?;
+        let text = self.send(method, path, body.as_deref()).await?;
+        Ok(serde_json::from_str(&text)?)
+    }
 
+    async fn send(&self, method: Method, path: &str, body: Option<&[u8]>) -> Result<String, Error> {
+        let url = format!("{}{path}", self.base_url);
         let mut attempt: u32 = 0;
         loop {
-            let request = self.build_request(&method, &url, body_bytes.as_deref(), attempt)?;
+            let request = self.build_request(&method, &url, body, attempt)?;
             let started = Instant::now();
 
             let (error, retry_after) = match self.http.send_async(request).await {
@@ -107,8 +123,7 @@ impl Client {
                     );
 
                     if status.is_success() {
-                        let text = response.text().await?;
-                        return Ok(serde_json::from_str(&text)?);
+                        return Ok(response.text().await?);
                     }
 
                     let retry_after = retry_after(response.headers());

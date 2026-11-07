@@ -1,4 +1,8 @@
-//! Run with `TYPESAFE_API_KEY=... cargo run --example demo -p systemone`.
+//! Hosted TypeSafe JEV, the default dialect (`POST /v1/systemone`).
+//!
+//! ```sh
+//! TYPESAFE_API_KEY=... cargo run --example demo -p systemone
+//! ```
 
 use std::collections::BTreeMap;
 
@@ -60,21 +64,9 @@ async fn run() -> Result<(), Error> {
             questions,
             model: None,
         })
-        .await;
+        .await?;
 
-    let result = match result {
-        Ok(result) => result,
-        Err(Error::Api {
-            status,
-            message,
-            request_id,
-        }) => {
-            eprintln!("API error {status} (request {request_id:?}): {message}");
-            return Ok(());
-        }
-        Err(err) => return Err(err),
-    };
-
+    println!("model: {}", result.model);
     for (name, answer) in &result.answers {
         println!("{name}: {answer:?}");
     }

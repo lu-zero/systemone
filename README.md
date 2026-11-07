@@ -54,8 +54,42 @@ let result = client
     .await?;
 ```
 
-See [`systemone/examples/demo.rs`](systemone/examples/demo.rs) for a runnable version,
-and `systemone-macro`/`systemone-facet` for typed `choice` answers instead of raw strings.
+Runnable examples, all asking the same three questions about one ticket:
+
+| Example | Server |
+|---------|--------|
+| [`systemone/examples/demo.rs`](systemone/examples/demo.rs) | Hosted TypeSafe (`TYPESAFE_API_KEY`). Also lists models. |
+| [`systemone/examples/local.rs`](systemone/examples/local.rs) | llama.cpp `POST /v1/systemone`. |
+| [`systemone/examples/openai.rs`](systemone/examples/openai.rs) | OpenAI Decisions (`OPENAI_API_KEY`). |
+
+`systemone-macro` and `systemone-facet` each have an example that deserializes a `choice`
+answer into an enum.
+
+## Dialects
+
+The default posts that body to `POST /v1/systemone`. `Dialect::OpenAi` posts the same
+questions to `POST /v1/decisions` and reads the answers back into the same types: a `noul`
+goes out as a `predicate`, and choice and score criteria go out as `choices` and `levels`.
+
+```rust
+use systemone::{Client, Dialect};
+
+let client = Client::builder()
+    .dialect(Dialect::OpenAi)
+    .default_model("gpt-6-luna")
+    .build()?;
+```
+
+[llama.cpp](https://github.com/ggml-org/llama.cpp) 0.9.0 serves `/v1/systemone` (since 0.6.0)
+for a decision GGUF, and does not register `/v1/decisions`. A chat model on that route
+returns 501. A server with one model loaded ignores `model`.
+[vllm.cpp](https://github.com/mudler/vllm.cpp) is the same: `/v1/systemone` only.
+Leave the dialect at its default for both.
+
+```sh
+llama-server -m /mnt/models/ggml-org-Julia-1-GGUF/Julia-1-Q8_0.gguf --host 127.0.0.1 --port 8080
+TYPESAFE_BASE_URL=http://127.0.0.1:8080 cargo run --example local -p systemone
+```
 
 ## Development
 

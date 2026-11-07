@@ -36,6 +36,7 @@
 mod client;
 mod config;
 mod criteria;
+mod dialect;
 mod error;
 mod questions;
 mod resources;
@@ -45,6 +46,7 @@ mod types;
 pub use client::Client;
 pub use config::{ClientBuilder, Env};
 pub use criteria::{ChoiceCriteria, choice_typed};
+pub use dialect::Dialect;
 pub use error::Error;
 pub use questions::{choice, noul, score};
 pub use resources::models::ModelCard;

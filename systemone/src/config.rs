@@ -4,6 +4,7 @@ use std::time::Duration;
 use isahc::HttpClient;
 
 use crate::client::Client;
+use crate::dialect::Dialect;
 use crate::error::Error;
 use crate::retry::RetryPolicy;
 
@@ -40,6 +41,7 @@ pub struct ClientBuilder {
     timeout: Option<Duration>,
     retry: Option<RetryPolicy>,
     default_headers: BTreeMap<String, String>,
+    dialect: Dialect,
 }
 
 impl ClientBuilder {
@@ -79,6 +81,12 @@ impl ClientBuilder {
         self
     }
 
+    /// Decision API to post questions to. Default: [`Dialect::SystemOne`].
+    pub fn dialect(mut self, dialect: Dialect) -> Self {
+        self.dialect = dialect;
+        self
+    }
+
     /// Resolve configuration and build the client.
     ///
     /// # Errors
@@ -105,6 +113,7 @@ impl ClientBuilder {
             timeout: self.timeout.unwrap_or(DEFAULT_TIMEOUT),
             retry: self.retry.unwrap_or_default(),
             default_headers: self.default_headers,
+            dialect: self.dialect,
             http: HttpClient::new()?,
         })
     }

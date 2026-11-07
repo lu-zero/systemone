@@ -46,6 +46,24 @@ into your own type with `system_one::<YourAnswers>(request)` instead for typed f
 use the `systemone-macro`/`systemone-facet` crates for typed `choice` questions without
 hand-writing both the labels sent to the API and the enum for the response.
 
+`ClientBuilder::dialect(Dialect::OpenAi)` posts the same questions to OpenAI's
+`POST /v1/decisions` and maps the answers back. The default dialect is
+`POST /v1/systemone`. That is the route
+[llama.cpp](https://github.com/ggml-org/llama.cpp) 0.9.0 (since 0.6.0) and
+[vllm.cpp](https://github.com/mudler/vllm.cpp) serve. Neither registers
+`/v1/decisions`.
+
+| Example | What it calls |
+|---------|----------------|
+| `cargo run --example demo -p systemone` | Hosted TypeSafe. Needs `TYPESAFE_API_KEY`. |
+| `cargo run --example local -p systemone` | `POST /v1/systemone` on `TYPESAFE_BASE_URL`, or `http://127.0.0.1:8080`. |
+| `cargo run --example openai -p systemone` | OpenAI Decisions. Needs `OPENAI_API_KEY`. |
+
+`local` does not call `GET /v1/models`. llama.cpp's list is the OpenAI shape, which
+[`ModelCard`] does not parse. Load a decision GGUF. A chat model returns 501. One
+loaded model ignores the request's `model` field. Julia-1 Q8_0 is at
+`/mnt/models/ggml-org-Julia-1-GGUF/Julia-1-Q8_0.gguf`.
+
 ## Configuration
 
 `Client::builder()` resolves settings in this order: explicit builder call, then
