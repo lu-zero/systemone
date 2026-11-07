@@ -1,12 +1,10 @@
 use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
-use isahc::config::Configurable;
-use isahc::http::Method;
-use isahc::http::header::{
-    AUTHORIZATION, CONTENT_TYPE, HeaderName, HeaderValue, RETRY_AFTER, USER_AGENT,
+use http::Method;
+use http::header::{
+    AUTHORIZATION, CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue, RETRY_AFTER, USER_AGENT,
 };
-use isahc::{AsyncReadResponseExt, HttpClient, Request};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tracing::{debug, info};
@@ -39,7 +37,7 @@ pub struct Client {
     pub default_headers: BTreeMap<String, String>,
     /// Decision API this client posts to.
     pub dialect: Dialect,
-    pub(crate) http: HttpClient,
+    pub(crate) http: reqwest::Client,
 }
 
 impl Client {
@@ -108,11 +106,9 @@ impl Client {
         let url = format!("{}{path}", self.base_url);
         let mut attempt: u32 = 0;
         loop {
-            let request = self.build_request(&method, &url, body, attempt)?;
             let started = Instant::now();
-
-            let (error, retry_after) = match self.http.send_async(request).await {
-                Ok(mut response) => {
+            let (error, retry_after) = match self.dispatch(&method, &url, body, attempt).await {
+                Ok(response) => {
                     let status = response.status();
                     info!(
                         method = %method,
@@ -123,7 +119,7 @@ impl Client {
                     );
 
                     if status.is_success() {
-                        return Ok(response.text().await?);
+                        return response.text().await.map_err(|err| Error::connection(&err));
                     }
 
                     let retry_after = retry_after(response.headers());
@@ -143,7 +139,8 @@ impl Client {
                     }
                     (error, retry_after)
                 }
-                Err(err) => (err.into(), None),
+                Err(error @ Error::Connection(_)) => (error, None),
+                Err(error) => return Err(error),
             };
 
             if attempt >= self.retry.max_retries {
@@ -151,33 +148,33 @@ impl Client {
             }
             let delay = self.retry.delay_for(attempt, retry_after);
             debug!(attempt, delay_ms = delay.as_millis() as u64, %error, "retrying");
-            async_io::Timer::after(delay).await;
+            tokio::time::sleep(delay).await;
             attempt += 1;
         }
     }
 
-    fn build_request(
+    async fn dispatch(
         &self,
         method: &Method,
         url: &str,
         body: Option<&[u8]>,
         attempt: u32,
-    ) -> Result<Request<Vec<u8>>, Error> {
-        let mut builder = Request::builder()
-            .method(method.clone())
-            .uri(url)
+    ) -> Result<reqwest::Response, Error> {
+        let mut builder = self
+            .http
+            .request(method.clone(), url)
             .timeout(self.timeout)
-            .header(AUTHORIZATION, format!("Bearer {}", self.api_key))
+            .header(
+                AUTHORIZATION,
+                HeaderValue::try_from(format!("Bearer {}", self.api_key))?,
+            )
             .header(USER_AGENT, format!("systemone-rs/{SDK_VERSION}"));
 
         if body.is_some() {
             builder = builder.header(CONTENT_TYPE, "application/json");
         }
         if attempt > 0 {
-            builder = builder.header(
-                HeaderName::from_static(RETRY_COUNT_HEADER),
-                attempt.to_string(),
-            );
+            builder = builder.header(RETRY_COUNT_HEADER, attempt.to_string());
         }
         for (name, value) in &self.default_headers {
             builder = builder.header(
@@ -185,12 +182,14 @@ impl Client {
                 HeaderValue::try_from(value.as_str())?,
             );
         }
-
-        Ok(builder.body(body.map(<[u8]>::to_vec).unwrap_or_default())?)
+        if let Some(body) = body {
+            builder = builder.body(body.to_vec());
+        }
+        builder.send().await.map_err(|err| Error::connection(&err))
     }
 }
 
-fn retry_after(headers: &isahc::http::HeaderMap) -> Option<Duration> {
+fn retry_after(headers: &HeaderMap) -> Option<Duration> {
     if let Some(ms) = headers
         .get(RETRY_AFTER_MS_HEADER)
         .and_then(|v| v.to_str().ok())

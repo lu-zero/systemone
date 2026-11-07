@@ -9,8 +9,8 @@ A Rust client for the [TypeSafe AI](https://typesafe.ai) `systemone` API — ask
 questions about text or structured state and get back typed, probabilistic answers.
 A Rust counterpart to [`@typesafe-ai/sdk`](https://github.com/typesafe-ai/typesafe-sdk-js).
 
-Built on [`isahc`](https://docs.rs/isahc), which is executor-agnostic: this crate makes
-no assumption about `tokio`, `smol`, or any other async runtime.
+HTTP is [`reqwest`](https://docs.rs/reqwest) with rustls. Calls run on a [`tokio`](https://docs.rs/tokio)
+runtime. Redirects are off, and each attempt uses the client's timeout.
 
 ## Workspace layout
 
@@ -67,16 +67,22 @@ answer into an enum.
 
 ## Dialects
 
-The default posts that body to `POST /v1/systemone`. `Dialect::OpenAi` posts the same
-questions to `POST /v1/decisions` and reads the answers back into the same types: a `noul`
+The default posts that body to `POST /v1/systemone`. `Dialect::OpenAi` changes the path
+and the JSON, not the host, the key, or the default model (`jev-latest`). A `noul`
 goes out as a `predicate`, and choice and score criteria go out as `choices` and `levels`.
+String state is sent as text. An object or array is sent as `input_json` (OpenAI accepts
+an object or an array of objects). Null, bool, and number state are sent as the text
+`null`, `true`, `false`, or the number's digits.
 
 ```rust
 use systemone::{Client, Dialect};
 
+let api_key = std::env::var("OPENAI_API_KEY")?;
 let client = Client::builder()
-    .dialect(Dialect::OpenAi)
+    .api_key(api_key)
+    .base_url("https://api.openai.com")
     .default_model("gpt-6-luna")
+    .dialect(Dialect::OpenAi)
     .build()?;
 ```
 
@@ -87,7 +93,7 @@ returns 501. A server with one model loaded ignores `model`.
 Leave the dialect at its default for both.
 
 ```sh
-llama-server -m /mnt/models/ggml-org-Julia-1-GGUF/Julia-1-Q8_0.gguf --host 127.0.0.1 --port 8080
+llama-server -m path/to/Julia-1-Q8_0.gguf --host 127.0.0.1 --port 8080
 TYPESAFE_BASE_URL=http://127.0.0.1:8080 cargo run --example local -p systemone
 ```
 

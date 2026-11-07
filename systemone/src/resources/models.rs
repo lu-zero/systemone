@@ -1,4 +1,4 @@
-use isahc::http::Method;
+use http::Method;
 use serde::Deserialize;
 
 use crate::client::Client;

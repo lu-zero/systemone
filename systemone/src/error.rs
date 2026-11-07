@@ -15,7 +15,8 @@ pub enum Error {
     #[error("score criteria must have at least two entries, got {count}")]
     TooFewScoreCriteria { count: usize },
 
-    /// [`Dialect::OpenAi`](crate::Dialect::OpenAi) was selected and no model was set.
+    /// The OpenAI dialect was given an empty model string.
+    /// An unset model still uses the client default (`jev-latest`).
     #[error("a model is required to send an OpenAI decision")]
     MissingModel,
 
@@ -53,29 +54,22 @@ pub enum Error {
         request_id: Option<String>,
     },
 
-    /// The request could not connect, or the response could not be delivered.
+    /// The request could not be sent, or the response body could not be read.
+    /// The message includes the underlying cause.
     #[error("connection error: {0}")]
-    Connection(#[from] isahc::Error),
-
-    /// The request could not be built.
-    #[error(transparent)]
-    Http(#[from] isahc::http::Error),
+    Connection(String),
 
     /// A header name passed via `ClientBuilder::header` was invalid.
     #[error("invalid header name: {0}")]
-    InvalidHeaderName(#[from] isahc::http::header::InvalidHeaderName),
+    InvalidHeaderName(#[from] http::header::InvalidHeaderName),
 
     /// A header value passed via `ClientBuilder::header` was invalid.
     #[error("invalid header value: {0}")]
-    InvalidHeaderValue(#[from] isahc::http::header::InvalidHeaderValue),
+    InvalidHeaderValue(#[from] http::header::InvalidHeaderValue),
 
     /// The request or response body was not valid JSON for the expected shape.
     #[error("invalid JSON: {0}")]
     Json(#[from] serde_json::Error),
-
-    /// Reading the response body failed.
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
 }
 
 impl Error {
@@ -85,5 +79,17 @@ impl Error {
             Self::Api { status, .. } => Some(*status),
             _ => None,
         }
+    }
+
+    pub(crate) fn connection(err: &impl std::error::Error) -> Self {
+        // reqwest's Display is only the top of the source chain.
+        let mut message = err.to_string();
+        let mut source = err.source();
+        while let Some(cause) = source {
+            message.push_str(": ");
+            message.push_str(&cause.to_string());
+            source = cause.source();
+        }
+        Self::Connection(message)
     }
 }

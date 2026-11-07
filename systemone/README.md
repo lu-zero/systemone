@@ -7,9 +7,10 @@
 Rust client for the [TypeSafe AI](https://typesafe.ai) `systemone` API: send text or
 structured state plus named questions, get back typed, probabilistic answers.
 
-Built on [`isahc`](https://docs.rs/isahc), which is executor-agnostic — this crate makes
-no assumption about `tokio`, `smol`, or any other runtime. Retry backoff sleeps via
-[`async-io`](https://docs.rs/async-io)'s `Timer`, which is likewise runtime-independent.
+HTTP is [`reqwest`](https://docs.rs/reqwest) with rustls. Calls run on a [`tokio`](https://docs.rs/tokio)
+runtime. Redirects are off, and each attempt uses the client's timeout. Retry backoff
+sleeps with `tokio::time::sleep`. `Error::Connection` is the transport message, including
+the cause chain.
 
 ## Quickstart
 
@@ -46,9 +47,13 @@ into your own type with `system_one::<YourAnswers>(request)` instead for typed f
 use the `systemone-macro`/`systemone-facet` crates for typed `choice` questions without
 hand-writing both the labels sent to the API and the enum for the response.
 
-`ClientBuilder::dialect(Dialect::OpenAi)` posts the same questions to OpenAI's
-`POST /v1/decisions` and maps the answers back. The default dialect is
-`POST /v1/systemone`. That is the route
+`ClientBuilder::dialect(Dialect::OpenAi)` changes the path and the JSON, not the
+host or the key. Set `.api_key` from `OPENAI_API_KEY`,
+`.base_url("https://api.openai.com")`, and `.default_model("gpt-6-luna")`.
+An unset model stays `jev-latest`. String state is sent as text. An object or
+array is sent as `input_json` (OpenAI accepts an object or an array of objects).
+Null, bool, and number state are sent as the text `null`, `true`, `false`, or
+the number's digits. The default dialect is `POST /v1/systemone`. That is the route
 [llama.cpp](https://github.com/ggml-org/llama.cpp) 0.9.0 (since 0.6.0) and
 [vllm.cpp](https://github.com/mudler/vllm.cpp) serve. Neither registers
 `/v1/decisions`.
@@ -60,9 +65,8 @@ hand-writing both the labels sent to the API and the enum for the response.
 | `cargo run --example openai -p systemone` | OpenAI Decisions. Needs `OPENAI_API_KEY`. |
 
 `local` does not call `GET /v1/models`. llama.cpp's list is the OpenAI shape, which
-[`ModelCard`] does not parse. Load a decision GGUF. A chat model returns 501. One
-loaded model ignores the request's `model` field. Julia-1 Q8_0 is at
-`/mnt/models/ggml-org-Julia-1-GGUF/Julia-1-Q8_0.gguf`.
+`ModelCard` does not parse. Load a decision GGUF, such as Julia-1 Q8_0. A chat
+model returns 501. One loaded model ignores the request's `model` field.
 
 ## Configuration
 
@@ -75,7 +79,7 @@ environment variable, then default.
 | Base URL | `.base_url(..)` | `TYPESAFE_BASE_URL` | `https://api.typesafe.ai` |
 | Default model | `.default_model(..)` | `TYPESAFE_DEFAULT_MODEL` | `jev-latest` |
 | Timeout per attempt | `.timeout(..)` | — | 10s |
-| Retry policy | `.retry(..)` | — | see [`RetryPolicy::default`] |
+| Retry policy | `.retry(..)` | — | see `RetryPolicy::default` |
 
 ## Errors and retries
 

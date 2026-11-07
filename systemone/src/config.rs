@@ -1,8 +1,6 @@
 use std::collections::BTreeMap;
 use std::time::Duration;
 
-use isahc::HttpClient;
-
 use crate::client::Client;
 use crate::dialect::Dialect;
 use crate::error::Error;
@@ -114,9 +112,17 @@ impl ClientBuilder {
             retry: self.retry.unwrap_or_default(),
             default_headers: self.default_headers,
             dialect: self.dialect,
-            http: HttpClient::new()?,
+            http: http_client()?,
         })
     }
+}
+
+fn http_client() -> Result<reqwest::Client, Error> {
+    // A 3xx must not replay the bearer token onto another origin.
+    reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|err| Error::connection(&err))
 }
 
 #[cfg(test)]

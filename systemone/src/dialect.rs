@@ -20,8 +20,8 @@ const REFUSAL: &str = "refusal";
 /// Which decision API a [`Client`](crate::Client) speaks.
 ///
 /// [`Dialect::SystemOne`] posts the request as written to `/v1/systemone`.
-/// [`Dialect::OpenAi`] posts the same questions to `/v1/decisions` and reads the
-/// answers back into the systemone types.
+/// [`Dialect::OpenAi`] posts the same questions to `/v1/decisions`. Host, key,
+/// and the default model stay as configured.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Dialect {
     /// TypeSafe `POST /v1/systemone`.

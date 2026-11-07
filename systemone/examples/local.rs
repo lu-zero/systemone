@@ -10,7 +10,7 @@
 //! `llama-server --version` with a build number before 11361 does not have this route.
 //!
 //! ```sh
-//! llama-server -m /mnt/models/ggml-org-Julia-1-GGUF/Julia-1-Q8_0.gguf \
+//! llama-server -m path/to/Julia-1-Q8_0.gguf \
 //!     --host 127.0.0.1 --port 8080
 //! TYPESAFE_BASE_URL=http://127.0.0.1:8080 cargo run --example local -p systemone
 //! ```
@@ -22,8 +22,9 @@ use std::collections::BTreeMap;
 
 use systemone::{Client, Error, SystemOneRequest, choice, noul, score};
 
-fn main() {
-    if let Err(err) = futures_lite::future::block_on(run()) {
+#[tokio::main]
+async fn main() {
+    if let Err(err) = run().await {
         eprintln!("error: {err}");
         std::process::exit(1);
     }

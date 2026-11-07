@@ -8,8 +8,9 @@ use std::collections::BTreeMap;
 
 use systemone::{Client, Error, SystemOneRequest, choice, noul, score};
 
-fn main() {
-    if let Err(err) = futures_lite::future::block_on(run()) {
+#[tokio::main]
+async fn main() {
+    if let Err(err) = run().await {
         eprintln!("error: {err}");
         std::process::exit(1);
     }

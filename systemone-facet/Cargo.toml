@@ -15,4 +15,4 @@ facet = "0.46"
 
 [dev-dependencies]
 serde = { workspace = true }
-futures-lite = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

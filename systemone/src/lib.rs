@@ -30,8 +30,7 @@
 //! # }
 //! ```
 //!
-//! Built on [`isahc`], which is executor-agnostic: this crate makes no assumption about
-//! `tokio`, `smol`, or any other async runtime.
+//! HTTP is [`reqwest`] with rustls. Calls need a [`tokio`] runtime. Redirects are off.
 
 mod client;
 mod config;

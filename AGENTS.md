@@ -20,8 +20,8 @@ Match `.github/workflows/ci.yml` before opening a PR — `just ci` runs the same
 
 ## Architecture
 
-- `systemone` — the client: HTTP transport (`isahc`), retry, errors, question builders,
-  wire types.
+- `systemone` — the client: HTTP transport (`reqwest` on `tokio`), retry, errors,
+  question builders, wire types.
 - `systemone-macro` — `#[derive(ChoiceCriteria)]`, compile-time codegen from an enum.
 - `systemone-facet` — the same via `facet` reflection at call time instead.
 - `systemone-bench` — criterion benchmark comparing the two; not published.
@@ -40,8 +40,8 @@ asked.
 - No inline magic numbers or strings.
 - Unit tests live in the same file under `#[cfg(test)] mod tests`. Use `test-case` for
   parametrized cases; name tests `snake_case`, describing the behavior, not "test1".
-- Executor-agnostic by design: `isahc` for HTTP, `async-io::Timer` for sleeps. No
-  `tokio`/`smol` dependency in library code.
+- The client runs on `tokio`. HTTP is `reqwest` (rustls, redirects off). Retry sleeps
+  use `tokio::time::sleep`.
 
 ## Dependencies
 
