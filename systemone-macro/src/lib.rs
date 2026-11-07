@@ -41,17 +41,17 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
             .unwrap_or_else(|| apply_case(&variant.ident.to_string(), rename_all.as_deref()));
         let description = match variant_doc(&variant.attrs) {
             Some(text) => {
-                quote! { ::std::option::Option::Some(::systemone::EntryType::from(#text)) }
+                quote! { ::core::option::Option::Some(::systemone::EntryType::from(#text)) }
             }
-            None => quote! { ::std::option::Option::None },
+            None => quote! { ::core::option::Option::None },
         };
         entries.push(quote! { (#label, #description) });
     }
 
     Ok(quote! {
         impl ::systemone::ChoiceCriteria for #name {
-            fn choice_criteria() -> ::std::vec::Vec<(&'static str, ::std::option::Option<::systemone::EntryType>)> {
-                ::std::vec![ #(#entries),* ]
+            fn choice_criteria() -> ::alloc::vec::Vec<(&'static str, ::core::option::Option<::systemone::EntryType>)> {
+                ::alloc::vec![ #(#entries),* ]
             }
         }
     })

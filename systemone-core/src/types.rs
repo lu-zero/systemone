@@ -1,4 +1,6 @@
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
@@ -74,7 +76,7 @@ pub struct ScoreResponse {
 }
 
 /// An answer whose question type wasn't known at compile time, as returned by
-/// [`Client::system_one_raw`](crate::Client::system_one_raw).
+/// `Client::system_one_raw` on the std client.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Answer {
@@ -99,14 +101,14 @@ pub struct SystemOneResult<A> {
     pub usage: Usage,
 }
 
-/// State and named questions for [`Client::system_one`](crate::Client::system_one).
+/// State and named questions for a systemone request.
 #[derive(Debug, Clone, Serialize)]
 pub struct SystemOneRequest {
     /// Text, a JSON object or array, or `null` to evaluate.
     pub state: EntryType,
     /// Nonempty questions keyed by the names used to identify their answers.
     pub questions: Questions,
-    /// Model override; `None` uses the client's default model.
+    /// Model override; `None` uses the host's default model.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
 }

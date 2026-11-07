@@ -16,10 +16,18 @@ runtime. Redirects are off, and each attempt uses the client's timeout.
 
 | Crate | Purpose |
 |-------|---------|
-| [`systemone`](systemone) | The client itself: HTTP transport, retry, errors, question builders, wire types. |
+| [`systemone-core`](systemone-core) | `no_std` + `alloc` protocol: wire types, question builders, `RetryPolicy`, OpenAI dialect. No HTTP. |
+| [`systemone`](systemone) | The maki client: depends on the core and re-exports it, plus HTTP transport (`reqwest` on `tokio`), retry loop, env config, models call. |
 | [`systemone-macro`](systemone-macro) | `#[derive(ChoiceCriteria)]` — build a `choice` question's labels and descriptions from an enum, at compile time. |
 | [`systemone-facet`](systemone-facet) | The same, via [`facet`](https://github.com/facet-rs/facet) reflection at call time instead of a proc-macro. |
 | [`systemone-bench`](systemone-bench) | Criterion benchmark comparing the two (not published). |
+
+A `no_std` host that only needs the protocol depends on `systemone-core` directly under
+the name the derive macro already uses:
+
+```toml
+systemone = { package = "systemone-core", version = "0.2" }
+```
 
 `systemone-macro` and `systemone-facet` solve the same problem two different ways —
 compile-time codegen vs. runtime reflection — and both are supported long-term rather
@@ -109,7 +117,8 @@ just ci      # everything CI runs
 ```
 
 `systemone-facet` and `systemone-bench` need Rust 1.90+ (the `facet` crate's MSRV);
-`systemone`/`systemone-macro` target 1.88, matching [maki](https://github.com/tontinton/maki)'s.
+`systemone-core`, `systemone`, and `systemone-macro` target 1.88, matching
+[maki](https://github.com/tontinton/maki)'s.
 See [AGENTS.md](AGENTS.md) for full project conventions.
 
 ## License

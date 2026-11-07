@@ -7,6 +7,8 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use systemone::ChoiceCriteria;
 
+extern crate alloc;
+
 #[derive(systemone_macro::ChoiceCriteria)]
 #[allow(dead_code)]
 enum CategoryMacro {

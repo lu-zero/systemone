@@ -20,10 +20,15 @@ Match `.github/workflows/ci.yml` before opening a PR — `just ci` runs the same
 
 ## Architecture
 
-- `systemone` — the client: HTTP transport (`reqwest` on `tokio`), retry, errors,
-  question builders, wire types.
+- `systemone-core` — the `no_std` + `alloc` protocol: wire types, question builders,
+  `ChoiceCriteria`, `RetryPolicy` (with `delay_for` taking the host's `fastrand::Rng`),
+  and the OpenAI dialect encode/decode. No HTTP, sleep, or environment access.
+- `systemone` — the maki client: depends on the core and re-exports it, plus the HTTP
+  transport (`reqwest` on `tokio`), the request loop, header parsing, env config, and
+  the models call. One private `send` is the transport seam.
 - `systemone-macro` — `#[derive(ChoiceCriteria)]`, compile-time codegen from an enum.
-- `systemone-facet` — the same via `facet` reflection at call time instead.
+  Emits `::alloc::`/`::core::` paths so `no_std` core users compile.
+- `systemone-facet` — the same via `facet` reflection at call time instead. Stays `std`.
 - `systemone-bench` — criterion benchmark comparing the two; not published.
 
 `systemone-macro` and `systemone-facet` solve the same problem two ways on purpose —
@@ -36,12 +41,14 @@ asked.
   existence.
 - No wildcard imports. No unnecessary state (variables, fields, arguments).
 - Explicit `Result<T, E>` over panics; `thiserror` for domain errors, one flat enum per
-  crate (not a class hierarchy) with helper methods on it (see `systemone::Error`).
+  crate (not a class hierarchy) with helper methods on it (see `systemone::Error` and
+  `systemone_core::Error`).
 - No inline magic numbers or strings.
 - Unit tests live in the same file under `#[cfg(test)] mod tests`. Use `test-case` for
   parametrized cases; name tests `snake_case`, describing the behavior, not "test1".
 - The client runs on `tokio`. HTTP is `reqwest` (rustls, redirects off). Retry sleeps
-  use `tokio::time::sleep`.
+  use `tokio::time::sleep`; the client seeds one `fastrand::Rng` (std global) at build
+  time and stores it in a `Mutex`, passing `&mut` to `RetryPolicy::delay_for`.
 
 ## Dependencies
 

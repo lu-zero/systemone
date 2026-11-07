@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
+use std::sync::Mutex;
 use std::time::Duration;
 
+use systemone_core::{Dialect, RetryPolicy};
+
 use crate::client::Client;
-use crate::dialect::Dialect;
 use crate::error::Error;
-use crate::retry::RetryPolicy;
 
 /// Environment variable names read by [`ClientBuilder::build`].
 pub struct Env;
@@ -113,6 +114,7 @@ impl ClientBuilder {
             default_headers: self.default_headers,
             dialect: self.dialect,
             http: http_client()?,
+            rng: Mutex::new(fastrand::Rng::with_seed(fastrand::u64(..))),
         })
     }
 }

@@ -1,5 +1,5 @@
-use std::collections::BTreeSet;
-use std::time::Duration;
+use alloc::collections::BTreeSet;
+use core::time::Duration;
 
 /// Retry configuration; see [`RetryPolicy::default`] for the defaults.
 #[derive(Debug, Clone)]
@@ -39,7 +39,13 @@ impl Default for RetryPolicy {
 
 impl RetryPolicy {
     /// Delay before the next attempt (`attempt` is zero-based: `0` for the first retry).
-    pub(crate) fn delay_for(&self, attempt: u32, retry_after: Option<Duration>) -> Duration {
+    /// The host owns `rng` and passes it in.
+    pub fn delay_for(
+        &self,
+        attempt: u32,
+        retry_after: Option<Duration>,
+        rng: &mut fastrand::Rng,
+    ) -> Duration {
         if self.respect_retry_after
             && let Some(retry_after) = retry_after.filter(|d| *d <= self.max_retry_after)
         {
@@ -49,7 +55,7 @@ impl RetryPolicy {
             .backoff_initial
             .saturating_mul(1u32.checked_shl(attempt).unwrap_or(u32::MAX))
             .min(self.backoff_max);
-        exponential.mul_f64(1.0 - fastrand::f64() * self.backoff_jitter)
+        exponential.mul_f64(1.0 - rng.f64() * self.backoff_jitter)
     }
 }
 
@@ -74,22 +80,25 @@ mod tests {
     #[test]
     fn retry_after_wins_over_backoff_when_within_max() {
         let policy = RetryPolicy::default();
-        let delay = policy.delay_for(0, Some(Duration::from_secs(3)));
+        let mut rng = fastrand::Rng::with_seed(42);
+        let delay = policy.delay_for(0, Some(Duration::from_secs(3)), &mut rng);
         assert_eq!(delay, Duration::from_secs(3));
     }
 
     #[test]
     fn retry_after_beyond_max_falls_back_to_backoff() {
         let policy = RetryPolicy::default();
-        let delay = policy.delay_for(0, Some(Duration::from_secs(120)));
+        let mut rng = fastrand::Rng::with_seed(42);
+        let delay = policy.delay_for(0, Some(Duration::from_secs(120)), &mut rng);
         assert!(delay <= policy.backoff_initial);
     }
 
     #[test]
     fn backoff_grows_and_caps() {
         let policy = RetryPolicy::default();
-        let first = policy.delay_for(0, None);
-        let capped = policy.delay_for(20, None);
+        let mut rng = fastrand::Rng::with_seed(42);
+        let first = policy.delay_for(0, None, &mut rng);
+        let capped = policy.delay_for(20, None, &mut rng);
         assert!(first <= policy.backoff_initial);
         assert!(capped <= policy.backoff_max);
     }

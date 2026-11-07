@@ -1,4 +1,6 @@
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::error::Error;
 use crate::types::{EntryType, NoulCriteria, Question};
@@ -46,8 +48,9 @@ pub fn choice<L: Into<String>>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use alloc::vec;
 
+    use super::*;
     #[test]
     fn score_rejects_fewer_than_two_criteria() {
         let err = score(EntryType::Null, vec![EntryType::from("only one")]).unwrap_err();

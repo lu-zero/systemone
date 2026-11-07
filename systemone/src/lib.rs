@@ -31,26 +31,20 @@
 //! ```
 //!
 //! HTTP is [`reqwest`] with rustls. Calls need a [`tokio`] runtime. Redirects are off.
+//!
+//! The protocol types and builders live in `systemone-core` and are re-exported here.
 
 mod client;
 mod config;
-mod criteria;
-mod dialect;
 mod error;
-mod questions;
 mod resources;
-mod retry;
-mod types;
 
 pub use client::Client;
 pub use config::{ClientBuilder, Env};
-pub use criteria::{ChoiceCriteria, choice_typed};
-pub use dialect::Dialect;
 pub use error::Error;
-pub use questions::{choice, noul, score};
-pub use resources::models::ModelCard;
-pub use retry::RetryPolicy;
-pub use types::{
-    Answer, ChoiceResponse, EntryType, NoulCriteria, NoulResponse, Question, Questions,
-    ScoreResponse, SystemOneRequest, SystemOneResult, Usage,
+pub use resources::models::Models;
+pub use systemone_core::{
+    Answer, ChoiceCriteria, ChoiceResponse, Dialect, EntryType, ModelCard, NoulCriteria,
+    NoulResponse, Question, Questions, RetryPolicy, ScoreResponse, SystemOneRequest,
+    SystemOneResult, Usage, choice, choice_typed, noul, score,
 };

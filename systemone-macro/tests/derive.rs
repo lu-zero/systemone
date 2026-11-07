@@ -1,3 +1,5 @@
+extern crate alloc;
+
 use systemone::ChoiceCriteria;
 use systemone_macro::ChoiceCriteria;
 

@@ -12,6 +12,10 @@ runtime. Redirects are off, and each attempt uses the client's timeout. Retry ba
 sleeps with `tokio::time::sleep`. `Error::Connection` is the transport message, including
 the cause chain.
 
+The protocol types and builders (`choice`, `noul`, `score`, `ChoiceCriteria`, `RetryPolicy`,
+`Dialect`, and the wire types) live in [`systemone-core`](../systemone-core) and are
+re-exported here, so `use systemone::...` stays valid.
+
 ## Quickstart
 
 Set `TYPESAFE_API_KEY` in your environment, then:

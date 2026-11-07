@@ -1,10 +1,15 @@
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 
 use crate::error::Error;
 use crate::types::{NoulCriteria, Question, Questions, SystemOneRequest};
 
-pub(crate) const DECISIONS_PATH: &str = "/v1/decisions";
+/// OpenAI Decisions endpoint path.
+pub const DECISIONS_PATH: &str = "/v1/decisions";
 
 const MIN_OPTIONS: usize = 2;
 const MAX_SCORE_LEVELS: usize = 10;
@@ -17,7 +22,7 @@ const CHOICE: &str = "choice";
 const SCORE: &str = "score";
 const REFUSAL: &str = "refusal";
 
-/// Which decision API a [`Client`](crate::Client) speaks.
+/// Which decision API the host speaks.
 ///
 /// [`Dialect::SystemOne`] posts the request as written to `/v1/systemone`.
 /// [`Dialect::OpenAi`] posts the same questions to `/v1/decisions`. Host, key,
@@ -31,7 +36,7 @@ pub enum Dialect {
     OpenAi,
 }
 
-pub(crate) fn encode(request: &SystemOneRequest) -> Result<Vec<u8>, Error> {
+pub fn encode(request: &SystemOneRequest) -> Result<Vec<u8>, Error> {
     Ok(serde_json::to_vec(&encode_value(request)?)?)
 }
 
@@ -167,7 +172,7 @@ fn rendered(value: &Value) -> Option<String> {
     (!text.is_empty()).then_some(text)
 }
 
-pub(crate) fn decode(body: &str, questions: &Questions) -> Result<Value, Error> {
+pub fn decode(body: &str, questions: &Questions) -> Result<Value, Error> {
     let response: DecisionResponse = serde_json::from_str(body)?;
     let mut answers = Map::new();
     for answer in response.answers {
@@ -315,7 +320,8 @@ struct DecisionProbability {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use alloc::collections::BTreeMap;
+    use alloc::vec;
 
     use super::*;
     use crate::questions::{choice, noul, score};

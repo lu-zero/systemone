@@ -1,16 +1,10 @@
 use http::Method;
 use serde::Deserialize;
 
+use systemone_core::ModelCard;
+
 use crate::client::Client;
 use crate::error::Error;
-
-/// Metadata for an available model.
-#[derive(Debug, Clone, Deserialize)]
-pub struct ModelCard {
-    pub name: String,
-    pub description: String,
-    pub release_date: String,
-}
 
 /// Response body for `GET /v1/models`.
 #[derive(Debug, Deserialize)]

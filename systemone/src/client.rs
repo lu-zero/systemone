@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use http::Method;
@@ -7,14 +8,12 @@ use http::header::{
 };
 use serde::Serialize;
 use serde::de::DeserializeOwned;
+use systemone_core::{Answer, Dialect, RetryPolicy, SystemOneRequest, SystemOneResult, dialect};
 use tracing::{debug, info};
 
 use crate::config::ClientBuilder;
-use crate::dialect::{self, Dialect};
 use crate::error::Error;
 use crate::resources::models::Models;
-use crate::retry::RetryPolicy;
-use crate::types::{Answer, SystemOneRequest, SystemOneResult};
 
 const REQUEST_ID_HEADER: &str = "x-typesafe-request-id";
 const RETRY_COUNT_HEADER: &str = "x-typesafe-retry-count";
@@ -38,6 +37,7 @@ pub struct Client {
     /// Decision API this client posts to.
     pub dialect: Dialect,
     pub(crate) http: reqwest::Client,
+    pub(crate) rng: Mutex<fastrand::Rng>,
 }
 
 impl Client {
@@ -146,7 +146,10 @@ impl Client {
             if attempt >= self.retry.max_retries {
                 return Err(error);
             }
-            let delay = self.retry.delay_for(attempt, retry_after);
+            let delay = {
+                let mut rng = self.rng.lock().unwrap_or_else(|e| e.into_inner());
+                self.retry.delay_for(attempt, retry_after, &mut rng)
+            };
             debug!(attempt, delay_ms = delay.as_millis() as u64, %error, "retrying");
             tokio::time::sleep(delay).await;
             attempt += 1;

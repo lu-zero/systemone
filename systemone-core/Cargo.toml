@@ -1,0 +1,18 @@
+[package]
+name = "systemone-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "no_std protocol types for the TypeSafe AI systemone API"
+
+[dependencies]
+serde = { workspace = true, default-features = false, features = ["alloc", "derive"] }
+serde_json = { workspace = true, default-features = false, features = ["alloc"] }
+thiserror = { workspace = true, default-features = false }
+fastrand = { workspace = true }
+
+[dev-dependencies]
+test-case = { workspace = true }

@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::questions::choice;
 use crate::types::{EntryType, Question};
 

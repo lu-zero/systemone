@@ -9,6 +9,7 @@ readme = "README.md"
 description = "Rust client for the TypeSafe AI systemone API"
 
 [dependencies]
+systemone-core = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -16,7 +17,7 @@ tracing = { workspace = true }
 http = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true }
-fastrand = { workspace = true }
+fastrand = { workspace = true, features = ["std"] }
 
 [dev-dependencies]
 test-case = { workspace = true }

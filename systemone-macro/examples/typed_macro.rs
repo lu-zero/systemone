@@ -1,5 +1,7 @@
 //! Run with `TYPESAFE_API_KEY=... cargo run --example typed_macro -p systemone-macro`.
 
+extern crate alloc;
+
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
